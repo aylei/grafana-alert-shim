@@ -1,18 +1,45 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/aylei/alert-shim/pkg/api"
-	"github.com/aylei/alert-shim/pkg/rule"
+	"github.com/aylei/alert-shim/pkg/config"
+	"os"
+)
+
+var (
+	Version   string
+	BuildTime string
+)
+
+var (
+	configFile string
 )
 
 func main() {
-	// TODO(aylei): compose according to config
-	r, err := rule.NewPromReader("http://localhost:9091")
+	flag.StringVar(&configFile, "config", "conf.yaml", "config file location")
+	printVersion := flag.Bool("v", false, "print build version")
+	flag.Parse()
+
+	if *printVersion {
+		fmt.Printf("Version: %s\n", Version)
+		fmt.Printf("Build time: %s\n", BuildTime)
+		os.Exit(0)
+	}
+
+	err := config.LoadConfig(configFile)
 	if err != nil {
 		panic(err)
 	}
-	ruleCli := rule.NewClient(r, &rule.NoopWriter{})
+	conf := config.GetConfig()
 
-	g := api.New(ruleCli)
-	g.Run(":10086")
+	g, err := api.New(conf)
+	if err != nil {
+		panic(err)
+	}
+	err = g.Run(fmt.Sprintf("%s:%d", conf.Addr, conf.Port))
+	if err != nil {
+		panic(err)
+	}
 }

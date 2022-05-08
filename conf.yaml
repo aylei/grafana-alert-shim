@@ -1,0 +1,10 @@
+reader:
+  type: generic
+  generic:
+    rulerBaseURL: http://localhost:9091
+    querierBaseURL: http://localhost:9092
+writer:
+  type: configmap
+  configmap:
+    namespace: test
+    name: test

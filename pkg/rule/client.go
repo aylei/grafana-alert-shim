@@ -2,13 +2,17 @@ package rule
 
 import (
 	"context"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
-	"go.uber.org/zap"
+	"time"
 )
 
 type Reader interface {
-	ListRules(ctx context.Context) ([]v1.RuleGroup, error)
+	// ListRules list all rules group by namespace or rule file
+	ListRules(ctx context.Context) (map[string][]rulefmt.RuleGroup, error)
+	// ListPromRules list all alert rules in promethues format
+	ListPromRules(ctx context.Context) ([]RuleGroup, error)
 }
 
 type Writer interface {
@@ -32,9 +36,30 @@ type client struct {
 	Writer
 }
 
+type RuleGroup struct {
+	Name     string  `json:"name"`
+	File     string  `json:"file"`
+	Interval float64 `json:"interval"`
+	Rules    []Rule  `json:"rules"`
+}
+
+type Rule struct {
+	Name           string         `json:"name"`
+	Query          string         `json:"query"`
+	Duration       float64        `json:"duration"`
+	Labels         model.LabelSet `json:"labels"`
+	Annotations    model.LabelSet `json:"annotations"`
+	Alerts         []*v1.Alert    `json:"alerts"`
+	Health         v1.RuleHealth  `json:"health"`
+	LastError      string         `json:"lastError,omitempty"`
+	EvaluationTime float64        `json:"evaluationTime"`
+	LastEvaluation time.Time      `json:"lastEvaluation"`
+	State          string         `json:"state"`
+	Type           string         `json:"type"`
+}
+
 type NoopWriter struct{}
 
 func (w *NoopWriter) CreateRuleGroup(ctx context.Context, rg *rulefmt.RuleGroup) error {
-	zap.L().Info("CreateRuleGroup", zap.Any("body", rg))
 	return nil
 }

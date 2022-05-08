@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shim.fullname" . }}
+  labels:
+    {{- include "shim.labels" . | nindent 4 }}
+data:
+  conf.yaml: |
+    reader:
+      type: generic
+      generic:
+        rulerBaseURL: {{ .Values.conf.rulerBaseURL }}
+        querierBaseURL: {{ .Values.conf.querierBaseURL }}
+    writer:
+      type: configmap
+      configmap:
+        namespace: test
+        name: test
