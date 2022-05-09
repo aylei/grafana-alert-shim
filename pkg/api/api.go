@@ -6,10 +6,14 @@ import (
 	"github.com/aylei/alert-shim/pkg/rule"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/model/rulefmt"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 )
+
+const messageKey = "message"
 
 //var (
 //	ruleGroupRegex = regexp.MustCompile("/rules/.*/(.*)")
@@ -34,6 +38,7 @@ func New(conf *config.Config) (*gin.Engine, error) {
 		cortex.GET("/rules", s.ListRules)
 		cortex.GET("/rules/:namespace", s.ListRules)
 		cortex.GET("/rules/:namespace/:group", s.GetRuleGroup)
+		cortex.DELETE("/rules/:namespace/:group", s.DeleteRuleGroup)
 		cortex.POST("/rules/:namespace", s.PostRuleGroup)
 	}
 	// proxy to prometheus
@@ -43,20 +48,6 @@ func New(conf *config.Config) (*gin.Engine, error) {
 	}
 
 	return g, nil
-}
-
-func compose(conf *config.Config) (*server, error) {
-	// TODO(aylei): plugable
-	reader, err := rule.NewPromReader(conf.Reader.Generic.RulerBaseURL)
-	if err != nil {
-		return nil, err
-	}
-	writer := &rule.NoopWriter{}
-	ruleCli := rule.NewClient(reader, writer)
-	return &server{
-		ruleCli: ruleCli,
-		conf:    conf,
-	}, nil
 }
 
 type server struct {
@@ -143,15 +134,54 @@ func (s *server) getRuleGroup(c *gin.Context, group string) {
 		}
 	}
 
-	if found {
-		c.Render(http.StatusOK, YAMLv3{Data: res})
-	} else {
-		c.JSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("group does not exist\n")})
+	if !found {
+		c.JSON(http.StatusNotFound, gin.H{messageKey: fmt.Sprintf("group does not exist\n")})
+		return
 	}
+	c.Render(http.StatusOK, YAMLv3{Data: res})
 }
 
 // PostRuleGroup overrides the rule group
 func (s *server) PostRuleGroup(c *gin.Context) {
-	// TODO(aylei)
-	c.YAML(http.StatusOK, nil)
+	var rg rulefmt.RuleGroup
+	data, err := c.GetRawData()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{messageKey: fmt.Sprintf("cannot read request body: %s", err.Error())})
+	}
+	err = yaml.Unmarshal(data, &rg)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{messageKey: fmt.Sprintf("cannot decode request body: %s", err.Error())})
+		return
+	}
+	errs := rule.ValidateRuleGroup(&rg)
+	if errs != nil {
+		c.JSON(http.StatusBadRequest, gin.H{messageKey: flattenErrMsg(errs)})
+		return
+	}
+	err = s.ruleCli.UpsertRuleGroup(c.Request.Context(), &rg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{messageKey: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{messageKey: "success"})
+}
+
+// DeleteRuleGroup delete the specified rule group
+func (s *server) DeleteRuleGroup(c *gin.Context) {
+	group := c.Param("group")
+	err := s.ruleCli.DeleteRuleGroup(c.Request.Context(), group)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{messageKey: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{messageKey: "success"})
+}
+
+func flattenErrMsg(errs []error) string {
+	sb := strings.Builder{}
+	for _, err := range errs {
+		sb.WriteString(err.Error())
+		sb.WriteByte('\n')
+	}
+	return sb.String()
 }

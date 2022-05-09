@@ -5,6 +5,8 @@ reader:
     querierBaseURL: http://localhost:9092
 writer:
   type: configmap
+  reloadURL: http://localhost:9091/-/reload
   configmap:
-    namespace: test
-    name: test
+    namespace: monitoring
+    name: thanos-rules
+    key: example.rules.yaml

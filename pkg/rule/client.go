@@ -16,7 +16,8 @@ type Reader interface {
 }
 
 type Writer interface {
-	CreateRuleGroup(ctx context.Context, rg *rulefmt.RuleGroup) error
+	UpsertRuleGroup(ctx context.Context, rg *rulefmt.RuleGroup) error
+	DeleteRuleGroup(ctx context.Context, groupName string) error
 }
 
 type Client interface {
@@ -58,8 +59,26 @@ type Rule struct {
 	Type           string         `json:"type"`
 }
 
+var _ Writer = &NoopWriter{}
+
 type NoopWriter struct{}
 
-func (w *NoopWriter) CreateRuleGroup(ctx context.Context, rg *rulefmt.RuleGroup) error {
+func (w *NoopWriter) DeleteRuleGroup(ctx context.Context, groupName string) error {
 	return nil
+}
+
+func (w *NoopWriter) UpsertRuleGroup(ctx context.Context, rg *rulefmt.RuleGroup) error {
+	return nil
+}
+
+var _ Reader = &NoopReader{}
+
+type NoopReader struct{}
+
+func (r *NoopReader) ListRules(ctx context.Context) (map[string][]rulefmt.RuleGroup, error) {
+	return nil, nil
+}
+
+func (r *NoopReader) ListPromRules(ctx context.Context) ([]RuleGroup, error) {
+	return nil, nil
 }

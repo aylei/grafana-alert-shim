@@ -14,7 +14,7 @@ So I did some investigation and found it is easy to build a shim that mimic the 
 ## Roadmap
 
 - [ ] Rule editing
-  - [ ] Support editing rules stored in k8s ConfigMap
+  - [x] Support editing rules stored in k8s ConfigMap
   - [ ] Support editing rules stored in [`PrometheusRule` CRD](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#prometheusrule)
   - [ ] (**Help wanted**) Support editing rules stored in the above forms, but with single source of truth at an VCS system like git (a.k.a. GitOPS)
 - [ ] Compatibility

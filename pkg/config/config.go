@@ -7,6 +7,14 @@ import (
 	"os"
 )
 
+const (
+	ReaderTypeGeneric = "generic"
+	ReaderTypeNoop    = "noop"
+
+	WriterTypeConfigMap = "configmap"
+	WriterTypeNoop      = "noop"
+)
+
 var conf = Config{
 	Addr: "0.0.0.0",
 	Port: 9086,
@@ -35,12 +43,16 @@ type WriterConfig struct {
 	// Type, possible values: configmap
 	Type string `yaml:"type"`
 
+	// if ReloadURL is specified, it would be POSTed after a write operation
+	ReloadURL string `yaml:"reloadURL"`
+
 	ConfigMap *ConfigMapWriterConfig `yaml:"configmap"`
 }
 
 type ConfigMapWriterConfig struct {
 	Namespace string `yaml:"namespace"`
 	Name      string `yaml:"name"`
+	Key       string `yaml:"key"`
 }
 
 func LoadConfig(fp string) error {
