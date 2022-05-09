@@ -24,7 +24,12 @@ So I did some investigation and found it is easy to build a shim that mimic the 
 ## Test in your environment
 
 ```bash
-helm install test charts/shim --set conf.querierBaseURL=<prom-query-endpoint> --set conf.rulerBaseURL=<prom-rule-endpoint>
+helm install test charts/shim \
+  --set conf.querierBaseURL=<prom-query-endpoint> \
+  --set conf.rulerBaseURL=<prom-rule-endpoint> \
+  --set conf.configmap.namespace=<rule-configmap-ns> \
+  --set conf.configmap.name=<rule-configmap-name> \
+  --set conf.configmap.key=<rule-configmap-key>
 ```
 
 For example, in my local development environment with a Thanos cluster, the command would be:
@@ -32,7 +37,10 @@ For example, in my local development environment with a Thanos cluster, the comm
 ```bash
 helm install --namespace monitoring test charts/shim \
   --set conf.querierBaseURL=http://thanos-query:9090 \
-  --set conf.rulerBaseURL=http://thanos-rule:9091
+  --set conf.rulerBaseURL=http://thanos-rule:9091 \
+  --set conf.configmap.namespace=monitoring \
+  --set conf.configmap.name=thanos-rules \
+  --set conf.configmap.key=rules.yaml
 ```
 
 Use this shim as the datasource instead of `thanos-query`:
