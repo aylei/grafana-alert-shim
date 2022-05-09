@@ -163,7 +163,7 @@ func (s *server) PostRuleGroup(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{messageKey: err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{messageKey: "success"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "success"})
 }
 
 // DeleteRuleGroup delete the specified rule group

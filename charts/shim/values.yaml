@@ -12,6 +12,11 @@ image:
 conf:
   querierBaseURL: prometheus-0
   rulerBaseURL: prometheus-0
+  configmap:
+    enabeld: true
+    namespace: monitoring
+    name: rule-config
+    key: rules.yaml
 
 serviceAccount:
   create: true

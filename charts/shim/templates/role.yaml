@@ -1,0 +1,32 @@
+{{- if .Values.conf.configmap.enabeld }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "shim.fullname" . }}
+  labels:
+    {{- include "shim.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "shim.fullname" . }}
+  labels:
+    {{- include "shim.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "shim.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "shim.serviceAccountName" . }}
+{{- end }}

@@ -13,6 +13,9 @@ data:
         querierBaseURL: {{ .Values.conf.querierBaseURL }}
     writer:
       type: configmap
+      {{- if .Values.conf.configmap.enabeld }}
       configmap:
-        namespace: test
-        name: test
+        namespace: {{ .Values.conf.configmap.namespace }}
+        name: {{ .Values.conf.configmap.name }}
+        key: {{ .Values.conf.configmap.key }}
+      {{- end }}
