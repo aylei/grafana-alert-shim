@@ -50,5 +50,3 @@ Use this shim as the datasource instead of `thanos-query`:
 If all goes well you will see that this data source is now recognized as Cortex with Ruler API available:
 
 ![success](./docs/success.png)
-
-
